@@ -36,7 +36,7 @@ Debloat and harden Brave, Chrome, Edge, and Firefox using enterprise managed pol
 
 ## Also
 
-**[Win11 Gaming Toolkit](https://github.com/cococool13/TweakEazy)** — PowerShell system-tuning toolkit. Every one of the 66 mutators declares its anti-cheat, reboot, and disk impact in its header, cites a Microsoft Learn or vendor source, and ships a paired restore script. 1100+ Pester tests, gate-enforced. Built because most "Windows optimizers" advertise their upside and hide their trade-offs.
+**[Win11 Gaming Toolkit](https://github.com/cococool13/win11-gaming-toolkit)** — PowerShell system-tuning toolkit. Every one of the 66 mutators declares its anti-cheat, reboot, and disk impact in its header, cites a Microsoft Learn or vendor source, and ships a paired restore script. 1100+ Pester tests, gate-enforced. Built because most "Windows optimizers" advertise their upside and hide their trade-offs.
 
 **Client work** — marketing and product sites for local businesses: a hardware store, a pharmacy, a retirement-plan evaluator. Mostly Astro and Next.js on Vercel and Cloudflare, with real Lighthouse budgets and no template smell. Repos are private; happy to walk through any of them.
 

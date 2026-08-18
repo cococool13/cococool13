@@ -10,7 +10,7 @@ Most of what I ship follows one rule: **it should do exactly what it says, and n
 
 A collection of small tools that respect the machine they run on.
 
-### [Spiral Wallpaper](https://github.com/cococool13/spiral-wallpaper) · `v1.0.1`
+### [Spiral Wallpaper](https://github.com/cococool13/spiral) · `v1.0.3`
 
 Desktop wallpaper app for macOS and Windows. Click a wallpaper, it applies.
 
@@ -21,7 +21,7 @@ Desktop wallpaper app for macOS and Windows. Click a wallpaper, it applies.
 
 `Rust` · `Tauri 2` · `React` · MIT
 
-### [Spiral Slim](https://github.com/cococool13/Spiral-Slim) · `v1.0.0`
+### [Spiral Slim](https://github.com/cococool13/spiral/tree/main/apps/slim) · `v1.0.0`
 
 Debloat and harden Brave, Chrome, Edge, and Firefox using enterprise managed policies — the mechanism the browsers already respect natively. No extensions, no patching binaries.
 
@@ -40,7 +40,7 @@ Debloat and harden Brave, Chrome, Edge, and Firefox using enterprise managed pol
 
 **Client work** — marketing and product sites for local businesses: a hardware store, a pharmacy, a retirement-plan evaluator. Mostly Astro and Next.js on Vercel and Cloudflare, with real Lighthouse budgets and no template smell. Repos are private; happy to walk through any of them.
 
-**[Portfolio →](https://spiraldemo.netlify.app)**
+**[Portfolio →](https://spiraldemo.pages.dev)**
 
 ---
 

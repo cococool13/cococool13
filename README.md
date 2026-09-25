@@ -8,6 +8,7 @@ This page is a list of public project folders. You do not need a GitHub account 
 
 ## Apps and sites
 
+- [Azukari](https://azukari.app) — An iPhone app. A friend holds the key to your apps, so only they can open them early. [App Store](https://apps.apple.com/app/id6807152754)
 - [Ember](https://github.com/cococool13/ember) — A Mac app in the menu bar. It makes the screen cooler in the morning and warmer at night. [Download](https://ember.cohencool.workers.dev)
 - [Afterimage](https://github.com/cococool13/afterimage) — A Windows app. Press F8 and it saves the last few seconds of what was on the screen. [Website](https://afterimage-site.cohencool.workers.dev)
 - [TweakEazy](https://github.com/cococool13/tweakeazy) — Windows settings for games. Every change can be turned back off. [Website](https://tweakeazy-site.cohencool.workers.dev)

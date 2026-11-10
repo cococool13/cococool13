@@ -40,3 +40,11 @@ test('draws one cell per day in both themes', () => {
   }
   for (const body of Object.values(files)) assert.ok(!/NaN|undefined/.test(body))
 })
+
+// main only accepts pull requests; a push to it from the workflow fails the daily run.
+test('the workflow publishes to the output branch, never to main', () => {
+  const wf = readFileSync(new URL('../.github/workflows/profile.yml', import.meta.url), 'utf8')
+  const pushes = wf.split('\n').filter((l) => /\bgit push\b/.test(l))
+  assert.equal(pushes.length, 1)
+  assert.match(pushes[0], / output$/)
+})

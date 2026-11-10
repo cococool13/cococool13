@@ -1,6 +1,5 @@
 query ($login: String!) {
   user(login: $login) {
-    createdAt
     contributionsCollection {
       contributionCalendar {
         totalContributions

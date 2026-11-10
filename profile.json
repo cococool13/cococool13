@@ -2,40 +2,39 @@
   "login": "cococool13",
   "first": "Cohen",
   "last": "Coolidge",
-  "kicker": "Student at UGA · Founder of Waive",
-  "bio": "I make small apps and websites. Right now that's mostly Waive.",
+  "kicker": "Student at UGA · Co-founder of Waive",
+  "bio": "I make small apps and websites.",
+  "site": "https://cohencool.com",
   "lead": {
     "slug": "waive",
     "name": "Waive",
     "blurb": "An iPhone app where a person you trust holds your unlock.",
-    "tag": "iPhone · getwaive.com",
+    "tag": "getwaive.com",
     "url": "https://getwaive.com",
     "color": "#2248C9"
   },
   "projects": [
     {
+      "slug": "utter",
+      "name": "Utter",
+      "blurb": "Dictation for Mac. Hold a key, speak, release.",
+      "url": "https://utter.cohencool.workers.dev",
+      "color": "#F2EBDC",
+      "ink": "#1C1A16"
+    },
+    {
       "slug": "ember",
       "name": "Ember",
       "blurb": "A Mac menu-bar app that warms the screen at night.",
-      "tag": "Swift · Mac",
       "url": "https://github.com/cococool13/ember",
       "color": "#CF4526"
     },
     {
-      "slug": "spiral",
-      "name": "Spiral",
-      "blurb": "Wallpaper and resume tools for Mac.",
-      "tag": "Rust · Mac",
-      "url": "https://github.com/cococool13/spiral",
+      "slug": "unboxed",
+      "name": "Unboxed",
+      "blurb": "Cleans your Mac. Everything goes to the Trash first.",
+      "url": "https://unboxed.cohencool.workers.dev",
       "color": "#1E5B45"
-    },
-    {
-      "slug": "agent-skills",
-      "name": "Agent Skills",
-      "blurb": "Reusable workflows for coding agents.",
-      "tag": "Python",
-      "url": "https://github.com/cococool13/agent-skills",
-      "color": "#6B2233"
     }
   ]
 }

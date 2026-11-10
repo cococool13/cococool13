@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/header-dark.svg">
-  <img src="assets/header-light.svg" width="100%" alt="Cohen Coolidge. Student at UGA, founder of Waive. I make small apps and websites.">
+  <img src="assets/header-light.svg" width="100%" alt="Cohen Coolidge. Student at UGA, co-founder of Waive. I make small apps and websites.">
 </picture>
 
 <picture>
@@ -14,10 +14,12 @@
 </picture>
 
 <p>
-  <a href="https://getwaive.com"><img src="assets/tile-waive.svg" width="100%" alt="Waive. An iPhone app where a person you trust holds your unlock."></a>
-</p>
-<p>
-  <a href="https://github.com/cococool13/ember"><img src="assets/tile-ember.svg" width="33.33%" alt="Ember. A Mac menu-bar app that warms the screen at night."></a><a href="https://github.com/cococool13/spiral"><img src="assets/tile-spiral.svg" width="33.33%" alt="Spiral. Wallpaper and resume tools for Mac."></a><a href="https://github.com/cococool13/agent-skills"><img src="assets/tile-agent-skills.svg" width="33.33%" alt="Agent Skills. Reusable workflows for coding agents."></a>
+  <a href="https://getwaive.com"><img src="assets/tile-waive.svg" width="100%" alt="Waive. An iPhone app where a person you trust holds your unlock."></a><a href="https://utter.cohencool.workers.dev"><img src="assets/tile-utter.svg" width="100%" alt="Utter. Dictation for Mac. Hold a key, speak, release."></a><a href="https://github.com/cococool13/ember"><img src="assets/tile-ember.svg" width="100%" alt="Ember. A Mac menu-bar app that warms the screen at night."></a><a href="https://unboxed.cohencool.workers.dev"><img src="assets/tile-unboxed.svg" width="100%" alt="Unboxed. Cleans your Mac. Everything goes to the Trash first."></a>
 </p>
 
-[cohencool.com](https://cohencool.com)
+<a href="https://cohencool.com">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/footer-dark.svg">
+    <img src="assets/footer-light.svg" width="100%" alt="cohencool.com">
+  </picture>
+</a>

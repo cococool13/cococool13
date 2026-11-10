@@ -13,7 +13,6 @@ const weeks = Array.from({ length: 53 }, (_, w) => ({
   }),
 }))
 const raw = { data: { user: {
-  createdAt: '2026-01-21T20:53:21Z',
   contributionsCollection: { contributionCalendar: { totalContributions: 375, weeks } },
   repositories: { nodes: [
     { languages: { edges: [{ size: 300, node: { name: 'Swift' } }, { size: 100, node: { name: 'Rust' } }] } },
@@ -25,7 +24,7 @@ test('shapes GitHub data into the numbers the page prints', () => {
   const d = shape(raw)
   assert.equal(d.today, '2026-11-10')
   assert.equal(d.weekday, 2)
-  assert.equal(d.issue, 294)
+  assert.equal(d.issue, 314)
   assert.equal(d.busiest.date, '2026-10-19')
   assert.equal(d.months.length, 12)
   assert.deepEqual(d.months.at(-1), { name: 'Nov', n: 10 })

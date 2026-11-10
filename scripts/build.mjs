@@ -15,14 +15,14 @@ const MONO_M = font('IBMPlexMono-500')
 const W = 880
 const THEMES = {
   light: {
-    paper: '#F2EBDC', edge: 'none', ink: '#1C1A16', muted: '#6E6659', rule: '#1C1A16', ruleOp: 0.2,
+    paper: '#F2EBDC', ink: '#1C1A16', muted: '#6E6659', rule: '#1C1A16', ruleOp: 0.2,
     pageInk: '#1C1A16', pageMuted: '#6A6F76', blue: '#1F4FD8',
     cells: ['#ECEEF2', '#C7D5FA', '#8EA8F2', '#4A72E6', '#1B45C4'],
   },
   dark: {
-    paper: '#1B1915', edge: '#35302A', ink: '#EFE7D6', muted: '#A1988A', rule: '#EFE7D6', ruleOp: 0.22,
+    paper: '#E9E1CF', ink: '#1C1A16', muted: '#6E6659', rule: '#ECE5D6', ruleOp: 0.22,
     pageInk: '#ECE5D6', pageMuted: '#8D96A0', blue: '#8AA8FF',
-    cells: ['#171C27', '#1C3070', '#2A4BB0', '#4F78EE', '#AFC4FF'],
+    cells: ['#1A2233', '#243F8F', '#3559C7', '#5B82F0', '#AFC4FF'],
   },
 }
 const LEVELS = ['NONE', 'FIRST_QUARTILE', 'SECOND_QUARTILE', 'THIRD_QUARTILE', 'FOURTH_QUARTILE']
@@ -55,7 +55,7 @@ const svg = (h, label, body, w = W) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title>${body}</svg>\n`
 
 const hairline = (x1, x2, y, t) => `<path stroke="${t.rule}" stroke-opacity="${t.ruleOp}" d="M${x1} ${y}H${x2}"/>`
-const label = (s, x, y, fill, o = {}) => text(s.toUpperCase(), x, y, o.size ?? 12, o.f ?? MONO, fill, { track: 0.14, ...o })
+const label = (s, x, y, fill, o = {}) => text(s.toUpperCase(), x, y, o.size ?? 13, o.f ?? MONO, fill, { track: 0.12, ...o })
 
 // ── data ────────────────────────────────────────────────────────────────────
 export function shape(raw) {
@@ -75,7 +75,7 @@ export function shape(raw) {
     total: cal.totalContributions,
     today,
     weekday: new Date(utc(today)).getUTCDay(),
-    issue: Math.floor((utc(today) - utc(user.createdAt.slice(0, 10))) / 864e5) + 1,
+    issue: (utc(today) - Date.UTC(+today.slice(0, 4), 0, 1)) / 864e5 + 1,
     busiest: days.reduce((a, d) => (d.contributionCount >= a.contributionCount ? d : a)),
     months: [...byMonth].slice(-12).map(([k, n]) => ({ name: MONTHS[k.slice(5) - 1], n })),
     languages: [...bytes].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, n]) => ({ name, share: n / allBytes })),
@@ -86,9 +86,9 @@ export function shape(raw) {
 function header(p, d, t, portrait) {
   const H = 404, pad = 52
   const date = `${WEEKDAYS[d.weekday]}, ${LONG_MONTHS[d.today.slice(5, 7) - 1]} ${+d.today.slice(8)}, ${d.today.slice(0, 4)}`
-  const bio = wrap(p.bio, 20, TEXT, 530)
+  const bio = wrap(p.bio, 22, TEXT, 440)
   const art = portrait
-    ? `<svg x="592" y="78" width="252" height="326" viewBox="0 0 252 326" color="${t.ink}">${portrait}</svg>`
+    ? `<svg x="536" y="62" width="344" height="445" viewBox="0 0 252 326" color="${t.ink}">${portrait}</svg>`
     : `<rect x="612" y="96" width="216" height="270" rx="4" fill="none" stroke="${t.muted}" stroke-dasharray="3 5"/>` +
       label('Portrait', 720, 228, t.muted, { anchor: 'middle' }) + label('needs your photo', 720, 248, t.muted, { anchor: 'middle', size: 10 })
   return svg(H, `${p.first} ${p.last}. ${p.kicker}. ${p.bio}`,
@@ -98,19 +98,18 @@ function header(p, d, t, portrait) {
     `<g clip-path="url(#c)"><rect width="${W}" height="${H}" fill="${t.paper}"/><rect width="${W}" height="${H}" filter="url(#g)"/>` +
     label(p.kicker, pad, 46, t.muted, { f: MONO_M }) +
     label(`No. ${d.issue} · ${date}`, W - pad, 46, t.muted, { anchor: 'end' }) +
-    hairline(pad, W - pad, 64.5, t) +
+    `<path stroke="${t.ink}" stroke-opacity="0.2" d="M${pad} 64.5H${W - pad}"/>` +
     text(p.first, pad - 5, 176, 118, DISPLAY, t.ink) +
     text(p.last, pad - 3, 282, 118, DISPLAY_I, t.ink) +
-    bio.map((l, i) => text(l, pad, 334 + i * 28, 20, TEXT, t.ink, { op: 0.86 })).join('') +
-    art + `</g>` +
-    (t.edge === 'none' ? '' : `<rect x=".5" y=".5" width="${W - 1}" height="${H - 1}" rx="7.5" fill="none" stroke="${t.edge}"/>`))
+    bio.map((l, i) => text(l, pad, 340 + i * 30, 22, TEXT, t.ink, { op: 0.86 })).join('') +
+    art + `</g>`)
 }
 
 // ── heatmap ─────────────────────────────────────────────────────────────────
 function heatmap(d, t) {
   const top = 132, gap = 3, cols = d.weeks.length
   const pitch = (W + gap) / cols, cell = pitch - gap
-  const H = top + 7 * pitch + 44
+  const H = top + 7 * pitch + 26
   const a = 'Every day, '
   const total = d.total.toLocaleString('en-US')
   let out = text(a, 0, 76, 44, DISPLAY, t.pageInk) + text('in blue', width(a, 44, DISPLAY), 76, 44, DISPLAY_I, t.blue) +
@@ -122,7 +121,7 @@ function heatmap(d, t) {
     const first = week.contributionDays[0].date
     const month = first.slice(5, 7)
     if (c > 0 && month !== d.weeks[c - 1].contributionDays[0].date.slice(5, 7) && c - lastLabel > 2 && c < cols - 1) {
-      out += label(MONTHS[month - 1], c * pitch, top - 12, t.pageMuted, { size: 11 })
+      out += label(MONTHS[month - 1], c * pitch, top - 12, t.pageMuted)
       lastLabel = c
     }
     for (const day of week.contributionDays)
@@ -136,28 +135,28 @@ function heatmap(d, t) {
   const end = col > cols / 2
   out += `<rect x="${r(bx - 1)}" y="${r(top + b.weekday * pitch - 1)}" width="${r(cell + 2)}" height="${r(cell + 2)}" rx="3.5" fill="none" stroke="${t.pageInk}" stroke-width="1.5"/>` +
     `<path fill="none" stroke="${t.pageInk}" d="M${cx} ${r(top + b.weekday * pitch + cell + 1)}V${r(by + 6)}H${end ? cx - 10 : cx + 10}"/>` +
-    label(note, end ? cx - 16 : cx + 16, by + 10, t.pageInk, { anchor: end ? 'end' : 'start', size: 11 })
+    label(note, end ? cx - 16 : cx + 16, by + 10, t.pageInk, { anchor: end ? 'end' : 'start' })
   return svg(Math.round(H), `Every day, in blue. ${total} contributions in the past year. ${note}.`, out)
 }
 
 // ── stats ───────────────────────────────────────────────────────────────────
 function stats(d, t) {
-  const H = 318, split = 548, base = 264, maxH = 150
+  const H = 292, split = 548, base = 264, maxH = 150
   let out = text('Month by month', 0, 62, 28, DISPLAY, t.pageInk) + text('Written in', split + 36, 62, 28, DISPLAY, t.pageInk) +
-    hairline(0, split, 82.5, t) + hairline(split + 36, W, 82.5, t) +
-    `<path stroke="${t.rule}" stroke-opacity="${t.ruleOp}" d="M${split + 0.5} 40V${H - 14}"/>`
+    hairline(0, split - 36, 82.5, t) + hairline(split + 36, W, 82.5, t) + hairline(0, split - 36, base + 0.5, t) +
+    `<path stroke="${t.rule}" stroke-opacity="${t.ruleOp}" d="M${split + 0.5} 40V${H}"/>`
   const peak = Math.max(...d.months.map((m) => m.n), 1)
-  const slot = split / d.months.length, bw = slot - 16
+  const slot = (split - 36 + 14) / d.months.length, bw = slot - 14
   d.months.forEach((m, i) => {
-    const h = Math.max((m.n / peak) * maxH, 1.5), x = i * slot, top = m.n === peak
+    const h = m.n && Math.max((m.n / peak) * maxH, 2), x = i * slot, top = m.n === peak
     out += `<rect x="${r(x)}" y="${r(base - h)}" width="${r(bw)}" height="${r(h)}" rx="2" fill="${top ? t.cells[4] : t.cells[3]}"/>` +
-      label(m.n.toLocaleString('en-US'), x + bw / 2, base - h - 8, top ? t.pageInk : t.pageMuted, { anchor: 'middle', size: 10.5, track: 0.02, f: top ? MONO_M : MONO }) +
-      label(m.name, x + bw / 2, base + 20, t.pageMuted, { anchor: 'middle', size: 10.5, track: 0.1 })
+      label(m.n.toLocaleString('en-US'), x + bw / 2, base - h - 8, top ? t.pageInk : t.pageMuted, { anchor: 'middle', size: 13, track: 0, f: top ? MONO_M : MONO, op: m.n ? 1 : 0.5 }) +
+      label(m.name, x + bw / 2, base + 22, t.pageMuted, { anchor: 'middle', size: 13, track: 0.06 })
   })
   d.languages.forEach((l, i) => {
     const y = 122 + i * 38, x = split + 36, w = W - x
     const pct = l.share < 0.01 ? '<1%' : `${Math.round(l.share * 100)}%`
-    out += text(l.name, x, y, 19, TEXT, t.pageInk) + label(pct, W, y, t.pageMuted, { anchor: 'end', size: 12, track: 0.04 }) +
+    out += text(l.name, x, y, 19, TEXT, t.pageInk) + label(pct, W, y, t.pageMuted, { anchor: 'end', size: 13, track: 0.02 }) +
       `<rect x="${x}" y="${y + 9}" width="${w}" height="3" rx="1.5" fill="${t.cells[0]}"/>` +
       `<rect x="${x}" y="${y + 9}" width="${r(Math.max(w * l.share, 3))}" height="3" rx="1.5" fill="${t.cells[i ? 3 : 4]}"/>`
   })
@@ -165,15 +164,25 @@ function stats(d, t) {
 }
 
 // ── project tiles (one SVG each so the README can link them) ────────────────
-function tile(p, w, h, nameSize, ml = 0, vw = w) {
-  const cream = '#F6EFE0', pad = 28, ax = w - pad, ay = h - pad - 12
-  const lines = wrap(p.blurb, 18, TEXT, w - pad * 2)
-  return svg(h, `${p.name}. ${p.blurb}`,
-    `<g transform="translate(${ml})"><rect width="${w}" height="${h}" rx="8" fill="${p.color}"/>` +
-    `<path fill="none" stroke="${cream}" stroke-width="1.6" d="M${ax - 13} ${ay + 13}L${ax} ${ay}M${ax - 10} ${ay}H${ax}V${ay + 10}"/>` +
-    text(p.name, pad - 2, pad + nameSize * 0.74, nameSize, DISPLAY_I, cream) +
-    lines.map((l, i) => text(l, pad, pad + nameSize * 0.74 + 36 + i * 25, 18, TEXT, cream, { op: 0.9 })).join('') +
-    label(p.tag, pad, h - pad, cream, { size: 11, op: 0.8 }) + '</g>', vw)
+const CREAM = '#F6EFE0', COL = 384, PAD = 36
+// `top` is transparent space baked in above the tile: README images cannot carry margins.
+function tile(p, h, top, nameSize, blurbSize, blurbFont) {
+  const ink = p.ink ?? CREAM, mid = top + h / 2, ax = W - PAD, ay = p.tag ? top + h - PAD - 9 : mid - 7
+  const max = W - COL - PAD - 34, greedy = wrap(p.blurb, blurbSize, blurbFont, max), lead = blurbSize * 1.3
+  // Re-wrap a two-line blurb to even lengths so no word is left alone on the last line.
+  const lines = greedy.length > 1 ? wrap(p.blurb, blurbSize, blurbFont, Math.min(max, (width(p.blurb, blurbSize, blurbFont) / greedy.length) * 1.15)) : greedy
+  return svg(top + h, `${p.name}. ${p.blurb}`,
+    `<rect y="${top}" width="${W}" height="${h}" rx="8" fill="${p.color}"/>` +
+    text(p.name, PAD - 3, p.tag ? top + 112 : mid + nameSize * 0.27, nameSize, DISPLAY_I, ink) +
+    lines.map((l, i) => text(l, COL, (p.tag ? top + 76 : mid + blurbSize * 0.3 - ((lines.length - 1) * lead) / 2) + i * lead, blurbSize, blurbFont, ink, { op: 0.92 })).join('') +
+    (p.tag ? label(p.tag, PAD, top + h - PAD + 4, ink, { op: 0.85 }) : '') +
+    `<path fill="none" stroke="${ink}" stroke-width="1.6" d="M${ax - 13} ${ay + 13}L${ax} ${ay}M${ax - 10} ${ay}H${ax}V${ay + 10}"/>`)
+}
+
+function footer(p, t) {
+  const s = p.site.replace(/^https?:\/\//, ''), w = width(s.toUpperCase(), 13, MONO_M, 0.12)
+  return svg(64, s, hairline(0, W, 16.5, t) + label(s, 0, 46, t.pageInk, { f: MONO_M }) +
+    `<path fill="none" stroke="${t.pageInk}" stroke-width="1.4" d="M${r(w + 10)} 46L${r(w + 20)} 36M${r(w + 12)} 36H${r(w + 20)}V44"/>`)
 }
 
 export function render(profile, data, portrait) {
@@ -182,10 +191,10 @@ export function render(profile, data, portrait) {
     files[`header-${name}.svg`] = header(profile, data, t, portrait)
     files[`heatmap-${name}.svg`] = heatmap(data, t)
     files[`stats-${name}.svg`] = stats(data, t)
+    files[`footer-${name}.svg`] = footer(profile, t)
   }
-  files[`tile-${profile.lead.slug}.svg`] = tile(profile.lead, W, 190, 64)
-  // Three across with no whitespace between the images: each SVG carries its share of the two 14px gaps.
-  profile.projects.forEach((p, i) => (files[`tile-${p.slug}.svg`] = tile(p, 284, 236, 44, (i * 14) / 3, 284 + 28 / 3)))
+  files[`tile-${profile.lead.slug}.svg`] = tile(profile.lead, 200, 24, 96, 27, DISPLAY)
+  for (const p of profile.projects) files[`tile-${p.slug}.svg`] = tile(p, 104, 10, 48, 21, TEXT)
   return files
 }
 

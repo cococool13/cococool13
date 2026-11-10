@@ -1,0 +1,40 @@
+{
+  "login": "cococool13",
+  "first": "Cohen",
+  "last": "Coolidge",
+  "kicker": "Student at UGA · Co-founder of Waive",
+  "bio": "I make small apps and websites.",
+  "site": "https://cohencool.com",
+  "lead": {
+    "slug": "waive",
+    "name": "Waive",
+    "blurb": "An iPhone app where a person you trust holds your unlock.",
+    "tag": "getwaive.com",
+    "url": "https://getwaive.com",
+    "color": "#2248C9"
+  },
+  "projects": [
+    {
+      "slug": "utter",
+      "name": "Utter",
+      "blurb": "Dictation for Mac. Hold a key, speak, release.",
+      "url": "https://utter.cohencool.workers.dev",
+      "color": "#F2EBDC",
+      "ink": "#1C1A16"
+    },
+    {
+      "slug": "ember",
+      "name": "Ember",
+      "blurb": "A Mac menu-bar app that warms the screen at night.",
+      "url": "https://github.com/cococool13/ember",
+      "color": "#CF4526"
+    },
+    {
+      "slug": "unboxed",
+      "name": "Unboxed",
+      "blurb": "Cleans your Mac. Everything goes to the Trash first.",
+      "url": "https://unboxed.cohencool.workers.dev",
+      "color": "#1E5B45"
+    }
+  ]
+}

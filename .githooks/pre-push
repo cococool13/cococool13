@@ -1,0 +1,3 @@
+#!/bin/sh
+# Same command CI runs.
+exec npm test

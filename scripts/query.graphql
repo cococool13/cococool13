@@ -1,0 +1,18 @@
+query ($login: String!) {
+  user(login: $login) {
+    createdAt
+    contributionsCollection {
+      contributionCalendar {
+        totalContributions
+        weeks {
+          contributionDays { date weekday contributionCount contributionLevel }
+        }
+      }
+    }
+    repositories(first: 100, ownerAffiliations: OWNER, privacy: PUBLIC, isFork: false) {
+      nodes {
+        languages(first: 20) { edges { size node { name } } }
+      }
+    }
+  }
+}

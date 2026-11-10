@@ -1,0 +1,34 @@
+name: Profile
+
+on:
+  schedule:
+    - cron: "17 9 * * *" # daily, about 5am Eastern
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: profile
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Fetch GitHub data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api graphql -F login="$GITHUB_REPOSITORY_OWNER" -f query="$(cat scripts/query.graphql)" > "$RUNNER_TEMP/data.json"
+      - run: node scripts/build.mjs "$RUNNER_TEMP/data.json"
+      - name: Commit
+        run: |
+          git add assets
+          git diff --cached --quiet && exit 0
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "chore: refresh profile"
+          git push

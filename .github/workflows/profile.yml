@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
@@ -26,9 +28,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh api graphql -F login="$GITHUB_REPOSITORY_OWNER" -f query="$(cat scripts/query.graphql)" > "$RUNNER_TEMP/data.json"
       - run: node scripts/build.mjs "$RUNNER_TEMP/data.json"
-      - name: Commit
+      # main only takes pull requests, so the generated SVGs live on their own
+      # one-commit branch. Force-pushing it also keeps daily images out of history.
+      - name: Publish to the output branch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git add assets
-          git diff --cached --quiet && exit 0
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "chore: refresh profile"
-          git push
+          cd assets
+          git init -q -b output
+          git add .
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "Profile images for $(date -u +%F)"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" output

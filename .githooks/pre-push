@@ -1,3 +1,4 @@
 #!/bin/sh
-# Same command CI runs.
-exec npm test
+# Runs `just check` on each pushed commit (skipped when that commit already
+# passed). Same command as agents and ship.
+exec .ci/bin/ci-pre-push

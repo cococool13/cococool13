@@ -38,7 +38,7 @@ test('draws one cell per day in both themes', () => {
     const cells = files[`heatmap-${theme}.svg`].match(/<rect [^>]*rx="2.5"/g)
     assert.equal(cells.length, 52 * 7 + 3)
   }
-  for (const body of Object.values(files)) assert.ok(!/NaN|undefined/.test(body))
+  for (const body of Object.values(files)) { assert.ok(!/NaN|undefined/.test(body)) }
 })
 
 // main only accepts pull requests; a push to it from the workflow fails the daily run.

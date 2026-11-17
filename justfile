@@ -4,8 +4,9 @@
 # profile.yml publishes the images daily (not a check; stays on GitHub).
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+# Everything, in parallel.
 check: setup
-    .ci/bin/ci-par test gitleaks
+    .ci/bin/ci-par test oxlint gitleaks
 
 # The whole suite takes under a second, so it runs on any change.
 check-fast: setup
@@ -15,13 +16,17 @@ check-fast: setup
     if [ -z "$({ git diff --name-only "$base"; git ls-files --others --exclude-standard; })" ]; then echo "check-fast: no changes"; exit 0; fi
     npm test
 
-# No formatter is configured.
+# No formatter is configured. Lowers the oxlint baseline after hits are fixed.
 fix:
-    @echo "fix: no autofixers in this repo"
+    .ci/bin/ci-oxlint --update
 
-# From ci.yml (npm ci, npm test).
+# From ci.yml (npm ci, npm test). Diff-only on PRs, one process per file, longest first.
 test: setup
-    npm test
+    .ci/bin/ci-test node
+
+# Every oxlint rule, type-aware, against .oxlint-baseline.json (old hits may only go down).
+oxlint:
+    .ci/bin/ci-oxlint
 
 setup:
     [ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund

@@ -1,0 +1,23 @@
+{
+ "scripts/build.mjs::eslint(curly)": 1,
+ "scripts/build.mjs::eslint(prefer-template)": 8,
+ "scripts/build.mjs::eslint(require-unicode-regexp)": 2,
+ "scripts/build.mjs::eslint(sort-vars)": 11,
+ "scripts/build.mjs::import(no-named-as-default-member)": 1,
+ "scripts/build.mjs::typescript(no-unsafe-argument)": 5,
+ "scripts/build.mjs::typescript(no-unsafe-assignment)": 37,
+ "scripts/build.mjs::typescript(no-unsafe-call)": 46,
+ "scripts/build.mjs::typescript(no-unsafe-member-access)": 149,
+ "scripts/build.mjs::typescript(no-unsafe-return)": 8,
+ "scripts/build.mjs::typescript(strict-boolean-expressions)": 13,
+ "scripts/build.mjs::unicorn(consistent-function-scoping)": 2,
+ "scripts/build.mjs::unicorn(no-array-for-each)": 3,
+ "scripts/build.mjs::unicorn(no-array-reduce)": 1,
+ "scripts/build.mjs::unicorn(no-array-sort)": 1,
+ "scripts/build.test.mjs::eslint(no-shadow)": 1,
+ "scripts/build.test.mjs::eslint(require-unicode-regexp)": 4,
+ "scripts/build.test.mjs::typescript(no-unsafe-argument)": 3,
+ "scripts/build.test.mjs::typescript(no-unsafe-assignment)": 4,
+ "scripts/build.test.mjs::typescript(no-unsafe-call)": 19,
+ "scripts/build.test.mjs::typescript(no-unsafe-member-access)": 18
+}

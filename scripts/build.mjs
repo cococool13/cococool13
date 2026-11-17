@@ -31,12 +31,12 @@ const LONG_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 const r = (n) => Math.round(n * 10) / 10
-const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+const esc = (s) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')
 const width = (s, size, f, track = 0) => f.getAdvanceWidth(s, size, { letterSpacing: track }) - track * size
 
 function text(s, x, y, size, f, fill, { anchor = 'start', track = 0, op } = {}) {
   const w = width(s, size, f, track)
-  const x0 = anchor === 'end' ? x - w : anchor === 'middle' ? x - w / 2 : x
+  const x0 = anchor === 'end' ? x - w : (anchor === 'middle' ? x - w / 2 : x)
   const d = f.getPath(s, x0, y, size, { letterSpacing: track }).toPathData(1)
   return `<path fill="${fill}"${op ? ` fill-opacity="${op}"` : ''} d="${d}"/>`
 }
@@ -45,8 +45,8 @@ function wrap(s, size, f, max) {
   const lines = ['']
   for (const word of s.split(' ')) {
     const next = lines.at(-1) ? `${lines.at(-1)} ${word}` : word
-    if (width(next, size, f) > max && lines.at(-1)) lines.push(word)
-    else lines[lines.length - 1] = next
+    if (width(next, size, f) > max && lines.at(-1)) { lines.push(word) }
+    else { lines[lines.length - 1] = next }
   }
   return lines
 }
@@ -59,23 +59,23 @@ const label = (s, x, y, fill, o = {}) => text(s.toUpperCase(), x, y, o.size ?? 1
 
 // ── data ────────────────────────────────────────────────────────────────────
 export function shape(raw) {
-  const user = raw.data.user
+  const { user } = raw.data
   const cal = user.contributionsCollection.contributionCalendar
   const days = cal.weeks.flatMap((w) => w.contributionDays)
   const today = days.at(-1).date
-  const utc = (d) => Date.UTC(+d.slice(0, 4), d.slice(5, 7) - 1, +d.slice(8, 10))
+  const utc = (d) => Date.UTC(Number(d.slice(0, 4)), d.slice(5, 7) - 1, Number(d.slice(8, 10)))
   const byMonth = new Map()
-  for (const d of days) byMonth.set(d.date.slice(0, 7), (byMonth.get(d.date.slice(0, 7)) ?? 0) + d.contributionCount)
+  for (const d of days) { byMonth.set(d.date.slice(0, 7), (byMonth.get(d.date.slice(0, 7)) ?? 0) + d.contributionCount) }
   const bytes = new Map()
   for (const repo of user.repositories.nodes)
-    for (const e of repo.languages.edges) bytes.set(e.node.name, (bytes.get(e.node.name) ?? 0) + e.size)
+    { for (const e of repo.languages.edges) bytes.set(e.node.name, (bytes.get(e.node.name) ?? 0) + e.size) }
   const allBytes = [...bytes.values()].reduce((a, b) => a + b, 0)
   return {
     weeks: cal.weeks,
     total: cal.totalContributions,
     today,
     weekday: new Date(utc(today)).getUTCDay(),
-    issue: (utc(today) - Date.UTC(+today.slice(0, 4), 0, 1)) / 864e5 + 1,
+    issue: (utc(today) - Date.UTC(Number(today.slice(0, 4)), 0, 1)) / 864e5 + 1,
     busiest: days.reduce((a, d) => (d.contributionCount >= a.contributionCount ? d : a)),
     months: [...byMonth].slice(-12).map(([k, n]) => ({ name: MONTHS[k.slice(5) - 1], n })),
     languages: [...bytes].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, n]) => ({ name, share: n / allBytes })),
@@ -85,7 +85,7 @@ export function shape(raw) {
 // ── header ──────────────────────────────────────────────────────────────────
 function header(p, d, t, portrait) {
   const H = 404, pad = 52
-  const date = `${WEEKDAYS[d.weekday]}, ${LONG_MONTHS[d.today.slice(5, 7) - 1]} ${+d.today.slice(8)}, ${d.today.slice(0, 4)}`
+  const date = `${WEEKDAYS[d.weekday]}, ${LONG_MONTHS[d.today.slice(5, 7) - 1]} ${Number(d.today.slice(8))}, ${d.today.slice(0, 4)}`
   const bio = wrap(p.bio, 22, TEXT, 440)
   const art = portrait
     ? `<svg x="536" y="62" width="344" height="445" viewBox="0 0 252 326" color="${t.ink}">${portrait}</svg>`
@@ -107,7 +107,7 @@ function header(p, d, t, portrait) {
 
 // ── heatmap ─────────────────────────────────────────────────────────────────
 function heatmap(d, t) {
-  const top = 132, gap = 3, cols = d.weeks.length
+  const gap = 3, top = 132, cols = d.weeks.length
   const pitch = (W + gap) / cols, cell = pitch - gap
   const H = top + 7 * pitch + 26
   const a = 'Every day, '
@@ -125,13 +125,13 @@ function heatmap(d, t) {
       lastLabel = c
     }
     for (const day of week.contributionDays)
-      out += `<rect x="${r(c * pitch)}" y="${r(top + day.weekday * pitch)}" width="${r(cell)}" height="${r(cell)}" rx="2.5" fill="${t.cells[LEVELS.indexOf(day.contributionLevel)]}"/>`
+      { out += `<rect x="${r(c * pitch)}" y="${r(top + day.weekday * pitch)}" width="${r(cell)}" height="${r(cell)}" rx="2.5" fill="${t.cells[LEVELS.indexOf(day.contributionLevel)]}"/>` }
   })
   // Callout for the busiest day: a leader line from its cell to a note under the grid.
   const b = d.busiest
   const col = d.weeks.findIndex((w) => w.contributionDays.includes(b))
   const bx = col * pitch, cx = r(bx + cell + gap / 2), by = top + 7 * pitch + 8
-  const note = `Busiest day · ${MONTHS[b.date.slice(5, 7) - 1]} ${+b.date.slice(8)} · ${b.contributionCount}`
+  const note = `Busiest day · ${MONTHS[b.date.slice(5, 7) - 1]} ${Number(b.date.slice(8))} · ${b.contributionCount}`
   const end = col > cols / 2
   out += `<rect x="${r(bx - 1)}" y="${r(top + b.weekday * pitch - 1)}" width="${r(cell + 2)}" height="${r(cell + 2)}" rx="3.5" fill="none" stroke="${t.pageInk}" stroke-width="1.5"/>` +
     `<path fill="none" stroke="${t.pageInk}" d="M${cx} ${r(top + b.weekday * pitch + cell + 1)}V${r(by + 6)}H${end ? cx - 10 : cx + 10}"/>` +
@@ -141,7 +141,7 @@ function heatmap(d, t) {
 
 // ── stats ───────────────────────────────────────────────────────────────────
 function stats(d, t) {
-  const H = 292, split = 548, base = 264, maxH = 150
+  const H = 292, base = 264, maxH = 150, split = 548
   let out = text('Month by month', 0, 62, 28, DISPLAY, t.pageInk) + text('Written in', split + 36, 62, 28, DISPLAY, t.pageInk) +
     hairline(0, split - 36, 82.5, t) + hairline(split + 36, W, 82.5, t) + hairline(0, split - 36, base + 0.5, t) +
     `<path stroke="${t.rule}" stroke-opacity="${t.ruleOp}" d="M${split + 0.5} 40V${H}"/>`
@@ -164,7 +164,7 @@ function stats(d, t) {
 }
 
 // ── project tiles (one SVG each so the README can link them) ────────────────
-const CREAM = '#F6EFE0', COL = 384, PAD = 36
+const COL = 384, CREAM = '#F6EFE0', PAD = 36
 // `top` is transparent space baked in above the tile: README images cannot carry margins.
 function tile(p, h, top, nameSize, blurbSize, blurbFont) {
   const ink = p.ink ?? CREAM, mid = top + h / 2, ax = W - PAD, ay = p.tag ? top + h - PAD - 9 : mid - 7
@@ -194,18 +194,18 @@ export function render(profile, data, portrait) {
     files[`footer-${name}.svg`] = footer(profile, t)
   }
   files[`tile-${profile.lead.slug}.svg`] = tile(profile.lead, 200, 24, 96, 27, DISPLAY)
-  for (const p of profile.projects) files[`tile-${p.slug}.svg`] = tile(p, 104, 10, 48, 21, TEXT)
+  for (const p of profile.projects) { files[`tile-${p.slug}.svg`] = tile(p, 104, 10, 48, 21, TEXT) }
   return files
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (process.argv[1] === import.meta.filename) {
   const read = (f) => readFileSync(f, 'utf8')
   const raw = JSON.parse(read(process.argv[2]))
-  if (!raw.data?.user) throw new Error(`No user in ${process.argv[2]}: ${JSON.stringify(raw.errors ?? raw).slice(0, 300)}`)
+  if (!raw.data?.user) { throw new Error(`No user in ${process.argv[2]}: ${JSON.stringify(raw.errors ?? raw).slice(0, 300)}`) }
   const portraitFile = `${root}portrait.svg`
   // portrait.svg is hand-made line art; only its inner markup is placed in the header.
-  const portrait = existsSync(portraitFile) ? read(portraitFile).replace(/^[\s\S]*?<svg[^>]*>|<\/svg>\s*$/g, '') : null
+  const portrait = existsSync(portraitFile) ? read(portraitFile).replaceAll(/^[\s\S]*?<svg[^>]*>|<\/svg>\s*$/g, '') : null
   mkdirSync(`${root}assets`, { recursive: true })
   for (const [name, body] of Object.entries(render(JSON.parse(read(`${root}profile.json`)), shape(raw), portrait)))
-    writeFileSync(`${root}assets/${name}`, body)
+    { writeFileSync(`${root}assets/${name}`, body) }
 }

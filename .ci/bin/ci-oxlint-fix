@@ -26,7 +26,7 @@ for code in $rules; do
   if bash -c "$verify" >/dev/null 2>&1; then
     kept+=("$rule"); git add -u
   else
-    dropped+=("$rule"); git diff --name-only | xargs git checkout -q --
+    dropped+=("$rule"); git diff --name-only --relative -z | xargs -0 git checkout -q --
   fi
 done
 echo "ci-oxlint-fix: applied ${#kept[@]} rule(s): ${kept[*]:-none}"

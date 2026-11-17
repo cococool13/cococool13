@@ -1,18 +1,21 @@
 #!/usr/bin/env bun
-// ci-oxlint [--init | --update] [oxlint args...]
+// ci-oxlint [--dir pkg] [--init | --update] [oxlint args...]
 // Runs oxlint (type-aware, the repo's .oxlintrc.jsonc) with a ratchet:
 // .oxlint-baseline.json records how many hits each file has per rule from
 // before every rule was turned on. A hit above that count fails, so new code
 // passes every rule while old hits can only go down.
 //   --init    write the baseline (only when none exists)
 //   --update  lower the baseline to the current counts; refuses to raise any
+//   --dir     run in a package subdirectory (its oxlint, config and baseline)
 import { $ } from "bun";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const args = process.argv.slice(2);
+let dir = ".";
+if (args[0] === "--dir") { dir = args[1]; args.splice(0, 2); }
 const mode = args[0] === "--init" || args[0] === "--update" ? args.shift() : "check";
 const root = (await $`git rev-parse --show-toplevel`.text()).trim();
-process.chdir(root);
+process.chdir(`${root}/${dir}`);
 const config = existsSync(".oxlintrc.jsonc") ? ".oxlintrc.jsonc" : ".oxlintrc.json";
 const file = ".oxlint-baseline.json";
 

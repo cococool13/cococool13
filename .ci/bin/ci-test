@@ -1,20 +1,25 @@
 #!/usr/bin/env bun
-// ci-test <vitest|node|bun> [--shards N] [--files <glob>]... [-- runner args...]
+// ci-test <vitest|node|bun> [--dir pkg] [--full] [--shards N] [--files <glob>]... [-- runner args...]
 //
 // Runs a repo's unit tests the fast way:
 // 1. Diff-only on PRs. When CI_BASE is set (ci-check sets it for any commit not
 //    on the default branch), only test files whose static import closure reaches
 //    a changed file run. Anything it cannot be sure about (a changed config,
-//    lockfile, fixture or non-JS file, an unresolvable relative import) runs all.
-//    Main and the nightly run everything.
+//    lockfile, fixture or non-JS file, an import it cannot resolve that is not a
+//    declared dependency, e.g. a path alias) runs all. Main and the nightly run
+//    everything. --full always runs everything (tests that reach the code through
+//    a spawned server rather than an import).
 // 2. Cores filled by recorded time. Each test file's last duration is kept in
 //    ~/.cache/ci/timings/<repo>/<runner>.json and files start longest-first.
 //    node/bun: one process per file across --shards N lanes (default: cores).
 //    vitest: one process; its pool already fills cores longest-first, and
 //    splitting it into several processes measured slower (8.6s vs 16.0s).
+// --dir runs from a package subdirectory (worker/, server/): its node_modules,
+// its config; --files globs are relative to it.
 // --files defaults to every tracked *.test.* / *.spec.* outside e2e/ and node_modules.
 // Runner args after `--` go to every shard (e.g. -- --import tsx).
 import { $ } from "bun";
+import { builtinModules } from "node:module";
 import { cpus, tmpdir } from "node:os";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
@@ -26,17 +31,22 @@ if (!runner || !["vitest", "node", "bun"].includes(runner)) {
   process.exit(2);
 }
 let shardsWanted = 0;
+let dir = ".";
+let full = false;
 const globs: string[] = [];
 let extra: string[] = [];
 for (let i = 0; i < argv.length; i++) {
   if (argv[i] === "--shards") shardsWanted = Number(argv[++i]);
+  else if (argv[i] === "--dir") dir = argv[++i];
+  else if (argv[i] === "--full") full = true;
   else if (argv[i] === "--files") globs.push(argv[++i]);
   else if (argv[i] === "--") { extra = argv.slice(i + 1); break; }
   else { console.error(`ci-test: unknown option ${argv[i]}`); process.exit(2); }
 }
 
 const root = (await $`git rev-parse --show-toplevel`.text()).trim();
-process.chdir(root);
+const cwd = resolve(root, dir);
+process.chdir(cwd);
 const pathspecs = globs.length ? globs.map((g) => `:(glob)${g}`) : [
   ":(glob)**/*.test.*", ":(glob)**/*.spec.*",
   ":(exclude,glob)**/e2e/**", ":(exclude,glob)**/node_modules/**",
@@ -59,6 +69,18 @@ function affected(changed: Set<string>): string[] | "ALL" {
       return "ALL";
     }
   }
+  const deps0 = new Set<string>();
+  for (const pj of (Bun.spawnSync(["git", "ls-files", "--", ":(glob)**/package.json", "package.json"], { cwd: root }).stdout.toString().split("\n").filter(Boolean))) {
+    try {
+      const j = JSON.parse(readFileSync(join(root, pj), "utf8"));
+      for (const k of ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]) for (const n of Object.keys(j[k] ?? {})) deps0.add(n);
+      if (j.name) deps0.add(j.name);
+    } catch {}
+  }
+  const declared = (pkg: string) => deps0.has(pkg);
+  const configs = Bun.spawnSync(["git", "ls-files", "--", ":(glob)**/*.config.*", ":(glob)*.config.*"], { cwd: root }).stdout.toString().split("\n").filter(Boolean)
+    .map((f) => { try { return readFileSync(join(root, f), "utf8"); } catch { return ""; } }).join("\n");
+  const aliased = (spec: string) => configs.includes(spec);
   const memo = new Map<string, string[]>();
   const deps = (file: string): string[] => {
     let d = memo.get(file);
@@ -68,12 +90,21 @@ function affected(changed: Set<string>): string[] | "ALL" {
     if (!scannable.has(extname(file)) || !existsSync(file)) return d;
     const e = extname(file);
     const loader = e === ".tsx" ? "tsx" : e === ".jsx" ? "jsx" : /^\.[mc]?ts$/.test(e) ? "ts" : "js";
-    for (const { path } of new Bun.Transpiler({ loader }).scanImports(readFileSync(file, "utf8"))) {
-      if (/^(node|bun):/.test(path)) continue;
+    for (const raw of new Bun.Transpiler({ loader }).scanImports(readFileSync(file, "utf8"))) {
+      const path = raw.path.replace(/\?.*$/, ""); // ../x.jsonc?raw
+      if (/^(node|bun):/.test(path) || builtinModules.includes(path)) continue;
       let r: string;
       try { r = Bun.resolveSync(path, dirname(file)); } catch {
-        if (/^[./]/.test(path)) throw new Error(`cannot resolve ${path} from ${file.slice(root.length + 1)}`);
-        continue; // an uninstalled package is not repo code
+        const where = file.slice(root.length + 1);
+        if (/^[./]/.test(path)) throw new Error(`cannot resolve ${path} from ${where}`);
+        if (/^[a-z]+:/.test(path)) {
+          // A runtime module (cloudflare:workers). Fine unless a config aliases it to repo code.
+          if (aliased(path)) throw new Error(`${path} in ${where} is aliased in a config`);
+          continue;
+        }
+        const pkg = path.startsWith("@") ? path.split("/").slice(0, 2).join("/") : path.split("/")[0];
+        if (declared(pkg)) continue; // a dependency that is not installed here is not repo code
+        throw new Error(`cannot resolve ${path} from ${where} (a path alias?)`);
       }
       if (!r.includes("/node_modules/") && r.startsWith(root + "/")) d.push(r);
     }
@@ -81,7 +112,7 @@ function affected(changed: Set<string>): string[] | "ALL" {
   };
   try {
     return files.filter((t) => {
-      const start = resolve(root, t), seen = new Set([start]), stack = [start];
+      const start = resolve(cwd, t), seen = new Set([start]), stack = [start];
       while (stack.length) {
         const f = stack.pop()!;
         if (changed.has(f)) return true;
@@ -95,7 +126,8 @@ function affected(changed: Set<string>): string[] | "ALL" {
   }
 }
 const base = process.env.CI_BASE;
-if (base) {
+if (base && full) console.log("ci-test: --full; running every test");
+if (base && !full) {
   const out = await $`git diff --name-only ${base} -- . && git diff --name-only HEAD -- . && git ls-files --others --exclude-standard`.text();
   const changed = new Set(out.split("\n").filter(Boolean).map((f) => resolve(root, f)));
   const pick = affected(changed);
@@ -109,7 +141,8 @@ if (base) {
 // ---------- 2. fill the cores by recorded time ----------
 const slug = (await $`git remote get-url origin`.nothrow().text()).trim()
   .replace(/.*github\.com[:/]/, "").replace(/\.git$/, "").replace("/", "__") || root.split("/").pop()!;
-const store = join(process.env.XDG_CACHE_HOME ?? join(process.env.HOME!, ".cache"), "ci", "timings", slug, `${runner}.json`);
+const pkgKey = dir === "." ? "" : `${dir.replace(/[^A-Za-z0-9._-]/g, "_")}-`;
+const store = join(process.env.XDG_CACHE_HOME ?? join(process.env.HOME!, ".cache"), "ci", "timings", slug, `${pkgKey}${runner}.json`);
 const times: Record<string, number> = existsSync(store) ? JSON.parse(readFileSync(store, "utf8")) : {};
 const known = files.map((f) => times[f]).filter((t) => t != null).sort((a, b) => a - b);
 const guess = known.length ? known[Math.floor(known.length / 2)] : 1;
@@ -130,12 +163,16 @@ if (runner === "vitest") {
   // longest-recorded-first (its results cache). Several vitest processes measured slower.
   const tmp = mkdtempSync(join(tmpdir(), "ci-test-"));
   const json = join(tmp, "vitest.json");
-  const r = await run(["npx", "vitest", "run", "--reporter=default", "--reporter=json",
+  // --no-install: the repo's pinned vitest or nothing, never a cached or downloaded one.
+  const r = await run(["npx", "--no-install", "vitest", "run", "--reporter=default", "--reporter=json",
     `--outputFile.json=${json}`, ...extra, ...queue]);
   if (existsSync(json)) {
     for (const t of JSON.parse(readFileSync(json, "utf8")).testResults ?? []) {
-      const rel = String(t.name).startsWith(root) ? String(t.name).slice(root.length + 1) : String(t.name);
-      if (t.endTime && t.startTime) measured[rel] = (t.endTime - t.startTime) / 1000;
+      const rel = String(t.name).startsWith(cwd + "/") ? String(t.name).slice(cwd.length + 1) : String(t.name);
+      // File wall time, or the sum of its tests when vitest reports no file span.
+      const span = t.endTime && t.startTime ? t.endTime - t.startTime : 0;
+      const sum = (t.assertionResults ?? []).reduce((a: number, x: { duration?: number }) => a + (x.duration ?? 0), 0);
+      measured[rel] = Math.max(span, sum) / 1000;
     }
   }
   process.stdout.write(r.out.split("\n").slice(r.ok ? -8 : -120).join("\n") + "\n");
@@ -161,7 +198,11 @@ if (runner === "vitest") {
 }
 const wall = (performance.now() - started) / 1000;
 mkdirSync(dirname(store), { recursive: true });
-writeFileSync(store, JSON.stringify({ ...times, ...measured }));
+// Re-read before writing: parallel recipes using the same runner share this file.
+const latest = existsSync(store) ? JSON.parse(readFileSync(store, "utf8")) : {};
+const tmpStore = `${store}.${process.pid}`;
+writeFileSync(tmpStore, JSON.stringify({ ...latest, ...measured }));
+await $`mv ${tmpStore} ${store}`;
 const slowest = Object.entries(measured).sort((a, b) => b[1] - a[1]).slice(0, 3)
   .map(([f, t]) => `${f} ${t.toFixed(1)}s`).join(", ");
 console.log(`ci-test: ${files.length} files, ${lanes} lane(s), ${wall.toFixed(1)}s wall; slowest: ${slowest}`);

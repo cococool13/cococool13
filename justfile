@@ -30,7 +30,8 @@ oxlint:
 setup:
     [ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund
 
-# Full history, with the repo's .gitleaks.toml when there is one.
+# Branch commits, with the repo's .gitleaks.toml when there is one.
+# `gitleaks-full` scans the whole history.
 gitleaks:
     .ci/bin/ci-gitleaks
 

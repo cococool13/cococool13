@@ -1,7 +1,6 @@
 # CI contract. Agents, the pre-push hook and `ship` all run `just check`.
 # Kit: .ci/ (vendored with ci-sync; `just ci-drift` shows drift).
-# GitHub Actions still run here too (public repo): ci.yml runs the same tests,
-# profile.yml publishes the images daily (not a check; stays on GitHub).
+# Profile images are rebuilt by hand; see AGENTS.md.
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # Everything, in parallel.
@@ -20,7 +19,7 @@ check-fast: setup
 fix:
     .ci/bin/ci-oxlint --update
 
-# From ci.yml (npm ci, npm test). Diff-only on PRs, one process per file, longest first.
+# npm ci, npm test. Diff-only on PRs, one process per file, longest first.
 test: setup
     .ci/bin/ci-test node
 
